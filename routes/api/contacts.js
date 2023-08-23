@@ -14,7 +14,7 @@ const {
 const contactSchema = Joi.object({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
-  phone: Joi.string().required(),
+  phone: Joi.string().required()
 });
 
 // GET /api/contacts
@@ -46,9 +46,11 @@ router.get('/:contactId', async (req, res, next) => {
 // POST /api/contacts
 router.post('/', async (req, res, next) => {
   try {
-    const { error } = contactSchema.validate(req.body);
+    const { error } = contactSchema.validate(req.body, { abortEarly: false });
+    
     if (error) {
-      res.status(400).json({ message: 'Validation error', details: error.details });
+      const missingField = error.details[0].context.key;
+      res.status(400).json({ message: `Missing required ${missingField} field` });
     } else {
       const newContact = await addContact(req.body);
       res.status(201).json(newContact);
@@ -72,14 +74,24 @@ router.delete('/:contactId', async (req, res, next) => {
   }
 });
 
-// PUT /api/contacts/:id
+// PUT /api/contacts/:contactId
 router.put('/:contactId', async (req, res, next) => {
   try {
+    const { contactId } = req.params;
+
+    if (!req.body) {
+      res.status(400).json({ message: 'Missing fields' });
+      return; 
+    }
+
     const { error } = contactSchema.validate(req.body);
+    
     if (error) {
-      res.status(400).json({ message: 'Validation error', details: error.details });
+      const missingField = error.details[0].context.key;
+      res.status(400).json({ message: `Missing required ${missingField} field` });
     } else {
-      const updatedContact = await updateContact(req.params.contactId, req.body);
+      const updatedContact = await updateContact(contactId, req.body);
+      
       if (updatedContact) {
         res.json(updatedContact);
       } else {
@@ -90,5 +102,6 @@ router.put('/:contactId', async (req, res, next) => {
     next(error);
   }
 });
+
 
 module.exports = router;
