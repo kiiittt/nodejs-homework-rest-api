@@ -1,4 +1,5 @@
 const express = require('express');
+const jsonParse = express.json();
 const Joi = require('joi'); 
 const router = express.Router();
 const {
@@ -12,10 +13,19 @@ const {
 
 // Валідація даних для POST та PUT запитів
 const contactSchema = Joi.object({
-  name: Joi.string().required(),
-  email: Joi.string().email().required(),
-  phone: Joi.string().required()
+  name: Joi.string().required().messages({
+    "any.required": "Missing required name field",
+  }),
+  email: Joi.string().email().required().messages({
+    "any.required": "Missing required email field",
+    "string.email": "Invalid email format",
+  }),
+  phone: Joi.string().required().messages({
+    "any.required": "Missing required phone field",
+  }),
 });
+
+
 
 // GET /api/contacts
 router.get('/', async (req, res, next) => {
@@ -44,13 +54,13 @@ router.get('/:contactId', async (req, res, next) => {
 });
 
 // POST /api/contacts
-router.post('/', async (req, res, next) => {
+router.post('/', jsonParse, async (req, res, next) => {
   try {
-    const { error } = contactSchema.validate(req.body, { abortEarly: false });
-    
-    if (error) {
-      const missingField = error.details[0].context.key;
-      res.status(400).json({ message: `Missing required ${missingField} field` });
+    const response = contactSchema.validate(req.body);
+
+    if (typeof response.error !== "undefined") {
+      const errorMessage = response.error.details[0].message; 
+      res.status(400).json({ message: errorMessage });
     } else {
       const newContact = await addContact(req.body);
       res.status(201).json(newContact);
@@ -59,6 +69,7 @@ router.post('/', async (req, res, next) => {
     next(error);
   }
 });
+
 
 // DELETE /api/contacts/:id
 router.delete('/:contactId', async (req, res, next) => {
@@ -77,26 +88,20 @@ router.delete('/:contactId', async (req, res, next) => {
 // PUT /api/contacts/:contactId
 router.put('/:contactId', async (req, res, next) => {
   try {
-    const { contactId } = req.params;
-
-    if (!req.body) {
-      res.status(400).json({ message: 'Missing fields' });
-      return; 
+    if (Object.keys(req.body).length === 0) {
+      return res.status(400).json({ message: "missing fields" });
     }
-
-    const { error } = contactSchema.validate(req.body);
-    
-    if (error) {
-      const missingField = error.details[0].context.key;
-      res.status(400).json({ message: `Missing required ${missingField} field` });
+    const response = contactSchema.validate(req.body);
+    if (typeof response.error !== "undefined") {
+      const errorMessage = response.error.details[0].message; 
+      res.status(400).json({ message: errorMessage });
+    }
+    const { contactId } = req.params;
+    const updatedContact = await updateContact(contactId, req.body);
+    if (updatedContact) {
+      res.json(updatedContact);
     } else {
-      const updatedContact = await updateContact(contactId, req.body);
-      
-      if (updatedContact) {
-        res.json(updatedContact);
-      } else {
-        res.status(404).json({ message: 'Not found' });
-      }
+      res.status(404).json({ message: "Not found" });
     }
   } catch (error) {
     next(error);
