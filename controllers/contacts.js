@@ -77,8 +77,8 @@ async function update(req, res, next) {
       new: true,
     }).exec();
     if (result === null) {
-    const errorMessage = response.error.details[0].message;
-    res.status(400).json({ message: errorMessage });
+      const errorMessage = response.error.details[0].message;
+      res.status(400).json({ message: errorMessage });
     }
     return res.json(result);
   } catch (error) {
