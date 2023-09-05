@@ -101,7 +101,7 @@ async function updateFavorite(req, res, next) {
   const { contactId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
-    return res.status(400).json({ message: "Invalid contact ID" });
+    return res.status(404).json({ message: "Not found"});
   }
 
   const contact = {
