@@ -28,7 +28,7 @@ async function auth(req, res, next) {
 
     try {
       const user = await User.findById(decode.id);
-      if (!user || user.token !== token) {
+      if (!user) {
         return res.status(401).json({ message: "Not authorized" });
       }
       req.user = { _id: decode.id };
