@@ -1,6 +1,7 @@
 const bcrypt = require("bcrypt");
 const User = require("../../models/user");
 const { registerSchema } = require("../../schemas/auth");
+const gravatar = require("gravatar");
 
 async function register(req, res, next) {
   const response = registerSchema.validate(req.body);
@@ -19,11 +20,13 @@ async function register(req, res, next) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const avatarURL = gravatar.url(email);
 
     const newUser = await User.create({
       email,
       password: passwordHash,
       subscription,
+      avatarURL,
     });
 
     res.status(201).json({
@@ -36,5 +39,4 @@ async function register(req, res, next) {
     next(error);
   }
 }
-
 module.exports = register;
