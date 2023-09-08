@@ -4,7 +4,7 @@ const router = express.Router();
 const AuthController = require("../../controllers/auth");
 const auth = require("../../middleware/auth");
 const upload = require("../../middleware/upload");
-// const { verifyEmail, resendVerifyEmail } = require("../../controllers/auth");
+const { verifyEmail, resendVerifyEmail } = require("../../controllers/auth");
 
 
 
@@ -25,8 +25,8 @@ router.patch(
 // );
 
 
-// router.get("/verify/:verificationToken", verifyEmail);
+router.get("/verify/:verificationToken", verifyEmail);
 
-// router.post("/verify", resendVerifyEmail);
+router.post("/verify", resendVerifyEmail);
 
 module.exports = router;
