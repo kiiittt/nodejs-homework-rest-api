@@ -3,12 +3,17 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
 const { loginSchema } = require("../../schemas/auth");
 const bcrypt = require("bcrypt");
+const user = require("../../models/user");
 
 async function login(req, res, next) {
   const response = loginSchema.validate(req.body);
 
   if (typeof response.error !== "undefined") {
     return res.status(400).json({ message: response.error.details[0].message });
+  }
+
+  if (!user.verify) {
+    return res.status(401).json({message: "Your email not verified"})
   }
 
   const { email, password } = req.body;
